@@ -42,4 +42,22 @@ public class Graph {
         }
         return sub;
     }
+
+    public Vertex[] getVertices() {
+        return vertexData;
+    }
+
+    public Vertex getVertex(int i) {
+        return vertexData[i];
+    }
+
+    public void setVertex(int i, Vertex v) {
+        vertexData[i] = v;
+    }
+
+    public void setPartitions(int[] assignment) {
+        for (int i = 0; i < vertexData.length; i++) {
+            vertexData[i].setPartitionId(assignment[i]);
+        }
+    }
 }
