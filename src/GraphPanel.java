@@ -13,16 +13,20 @@ public class GraphPanel extends JPanel {
         super.paintComponent(g);
         if (graph == null) return;
 
+        // Draw edges first
+        g.setColor(Color.BLACK);
         for (Vertex v : graph.getVertices()) {
             for (Vertex u : v.getNeighbours()) {
-                g.setColor(Color.BLACK);
                 g.drawLine(v.getX(), v.getY(), u.getX(), u.getY());
             }
         }
-
+        
+        // Now draw vertices
         for (Vertex v : graph.getVertices()) {
             g.setColor(getColorForPartition(v.getPartitionID()));
             g.fillOval(v.getX() - 5, v.getY() - 5, 10, 10);
+            g.setColor(Color.BLACK);
+            g.drawOval(v.getX() - 5, v.getY() - 5, 10, 10);
         }
     }
 
