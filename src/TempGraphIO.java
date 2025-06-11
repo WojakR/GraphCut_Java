@@ -1,11 +1,10 @@
-
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class TempGraphIO {
 
-    public static Graph loadGraph(String filename, int graphIndex) {
+    public static Graph loadGraph(String filename, int graphIndex) throws IOException {
         if (graphIndex <= 0) {
             System.err.println("Error: Target graph index must be a positive integer");
             return null;
@@ -88,8 +87,7 @@ public class TempGraphIO {
             return graph;
 
         } catch (IOException | NumberFormatException e) {
-            System.err.println("Error loading graph from " + filename + ": " + e.getMessage());
-            return null;
+            throw new IOException("Error loading graph from " + filename + ": " + e.getMessage(), e);
         }
     }
 

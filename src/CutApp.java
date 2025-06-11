@@ -1,4 +1,4 @@
-//import java.io.*;
+import java.io.IOException;
 import java.util.*;
 
 public class CutApp {
@@ -13,21 +13,26 @@ public class CutApp {
     public void run(String[] args) {
         if (!parseArgs(args)) return;
 
-        Graph graph = TempGraphIO.loadGraph(inputFile, targetGraphIndex);
-        if (graph == null) {
-            System.err.printf("Error: Failed to load graph %d\n", targetGraphIndex);
+        Graph graph = null;
+        try {
+            graph = TempGraphIO.loadGraph(inputFile, targetGraphIndex);
+        } catch (IOException e) {
+            System.err.printf("Error: Failed to load graph %d - %s\n", targetGraphIndex, e.getMessage());
             return;
         }
 
         if (verboseMode) graph.print();
 
         int[] assignment = Utils.createAssignmentArray(graph.numVertices());
-        Partition.cutGraph(graph, numPartitions, margin, assignment);
+        boolean ok = Partition.cutGraph(graph, numPartitions, margin, assignment, null);
+        if (!ok) {
+            System.err.println("Partitioning failed, graph remains unchanged.");
+            return;
+        }
 
         for (int i = 0; i < numPartitions; ++i) {
             String outputFilename = outputFileBase + "_" + i + ".csrrg" + (binary ? "bin" : "");
             TempGraphIO.savePartition(graph, assignment, i, outputFilename, binary);
-
         }
 
         System.out.println("Finished successfully.");

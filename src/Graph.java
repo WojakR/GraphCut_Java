@@ -68,4 +68,10 @@ public class Graph {
             vertexData[src].neighbors.add(vertexData[dest]);
         }
     }
+
+    public void clearGroups() {
+        for (int i = 0; i < numVertices(); i++) {
+            vertexData[i].groupId = -1; // or 0
+        }
+    }
 }

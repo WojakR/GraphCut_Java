@@ -1,9 +1,20 @@
 import java.util.*;
 
+import javax.swing.*;
+import java.awt.GraphicsEnvironment;
+
 public class Utils {
-    public static void handleError(int code, String message) {
-        System.err.printf("Error [%d]: %s%n", code, message);
-        System.exit(1);
+    public static void handleError(int code, String msg) {
+        if (GraphicsEnvironment.isHeadless()) {
+            System.err.printf("Error [%d]: %s%n", code, msg);
+            System.exit(code);
+        } else {
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(null, "Error [" + code + "]: " + msg,
+                    "Partitioning Error", JOptionPane.ERROR_MESSAGE);
+            });
+            throw new RuntimeException("Partitioning failed: " + msg); // breaks only an operation
+        }
     }
 
     public static void printHelp() {

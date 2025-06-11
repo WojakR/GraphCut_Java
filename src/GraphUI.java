@@ -1,4 +1,3 @@
-
 import javax.swing.*;
 import java.awt.BorderLayout;
 import java.util.Arrays;
@@ -28,7 +27,6 @@ public class GraphUI extends JFrame {
         graphPanel = new GraphPanel();
         add(graphPanel, BorderLayout.CENTER);
 
-        // Panel kontrolny (bez zmian)
         JPanel controlPanel = new JPanel();
         controlPanel.add(new JLabel("Number of divisions:"));
         divisionsField = new JTextField("2", 5);
@@ -43,6 +41,7 @@ public class GraphUI extends JFrame {
         loadTxt.addActionListener(e -> loadGraphFromTxt());
         loadBin.addActionListener(e -> loadGraphFromBin());
         save.addActionListener(e -> saveGraph());
+
         partitionBtn.addActionListener(e -> runPartitioning());
 
         setVisible(true);
@@ -94,28 +93,49 @@ public class GraphUI extends JFrame {
                 JOptionPane.showMessageDialog(this, "Graph saved successfully to " + filePath);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this, "An error occured while saving the file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                e.printStackTrace(); // Pomocne przy debugowaniu
+                e.printStackTrace();
             }
         }
     }
 
     private void runPartitioning() {
-        if (graph == null) {
-            JOptionPane.showMessageDialog(this, "Load a graph before partitioning.", "Info", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
+        if (graph == null) return;
+
         try {
-            int k = Integer.parseInt(divisionsField.getText());
-            int margin = (int)(Double.parseDouble(marginField.getText()));
+            int parts = Integer.parseInt(divisionsField.getText());
+            double margin = Double.parseDouble(marginField.getText());
+
             int[] assignment = new int[graph.numVertices()];
+            StringBuilder infoBuilder = new StringBuilder();
+            double[] finalMargin = {margin};
 
-            Partition.cutGraph(graph, k, margin, assignment);
+            boolean success = Partition.cutGraph(graph, parts, margin, assignment, m -> {
+                infoBuilder.append("Margin increased to: ").append(m).append("%\n");
+                finalMargin[0] = m;
+            });
 
-            graph.setPartitions(assignment);
+            if (!success) {
+                graph.clearGroups();
+                JOptionPane.showMessageDialog(this,
+                    "Failed to find the correct graph partition.\n" +
+                    infoBuilder.toString(),
+                    "Partitioning Error",
+                    JOptionPane.ERROR_MESSAGE);
+            } else if (finalMargin[0] > margin) {
+                JOptionPane.showMessageDialog(this,
+                    "Warning: To get the correct partition, margin has been increased to " + finalMargin[0] + "%",
+                    "Information",
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+
+            graphPanel.setGraph(graph);
             graphPanel.repaint();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "An error occured during graph partition: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
+
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this,
+                "Error: Input correct whole or floating point numbers.",
+                "Input data error",
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 

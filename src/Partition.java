@@ -1,17 +1,26 @@
+import java.util.function.Consumer;
+
 public class Partition {
-    public static void cutGraph(Graph g, int parts, double margin, int[] assignment) {
+    public static boolean cutGraph(Graph g, int parts, double margin, int[] assignment, Consumer<Double> onMarginIncrease) {
         int attempts = 0;
         double currentMargin = margin;
 
         while (attempts < 8) {
             Dijkstra.partition(g, assignment, parts);
             KernighanLin.refine(g, assignment, parts);
-            if (Utils.checkBalance(g, assignment, parts, currentMargin)) break;
+            if (Utils.checkBalance(g, assignment, parts, currentMargin)) {
+                for (int i = 0; i < g.numVertices(); i++) {
+                    g.vertexData[i].groupId = assignment[i];
+                }
+                return true;
+            }
+
             currentMargin += 5.0;
-            System.err.printf("Retrying with margin %.1f%%\n", currentMargin);
+            if (onMarginIncrease != null)
+                onMarginIncrease.accept(currentMargin);
             attempts++;
         }
-        if (attempts == 8) Utils.handleError(31, "Partitioning failed after retries");
-        for (int i = 0; i < g.numVertices(); i++) g.vertexData[i].groupId = assignment[i];
+
+        return false;
     }
 }

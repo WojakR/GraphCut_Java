@@ -1,18 +1,57 @@
-// Plik: GraphPanel.java (KOMPLETNY I POPRAWIONY)
-
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class GraphPanel extends JPanel {
     private Graph graph;
-    private final int PADDING = 40; // Margines w pikselach od krawędzi panelu
-    private final int NODE_SIZE = 10; // Średnica wierzchołka
+    private final int PADDING = 40; // Margin in pixels from panel edge
+    private final int NODE_SIZE = 10; // Vertice's diameter
+
+    private double scale = 1.0;
+    private double offsetX = 0;
+    private double offsetY = 0;
+    private int lastDragX, lastDragY;
+
+    public GraphPanel() {
+        addMouseWheelListener(e -> {
+            if (e.getPreciseWheelRotation() < 0) {
+                scale *= 1.1;
+            } else {
+                scale /= 1.1;
+            }
+            repaint();
+        });
+
+        addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                lastDragX = e.getX();
+                lastDragY = e.getY();
+            }
+        });
+
+        addMouseMotionListener(new MouseAdapter() {
+            public void mouseDragged(MouseEvent e) {
+                offsetX += e.getX() - lastDragX;
+                offsetY += e.getY() - lastDragY;
+                lastDragX = e.getX();
+                lastDragY = e.getY();
+                repaint();
+            }
+        });
+    }
 
     public void setGraph(Graph g) {
         this.graph = g;
-        repaint(); // Poproś o przerysowanie, gdy tylko graf zostanie ustawiony
+        repaint(); // Ask for redrawing when graph is set
+    }
+
+    public Consumer<Double> getMarginIncreaseCallback() {
+        return increasedMargin -> SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(this,
+            "Balance failed. Retrying with increased margin: " + increasedMargin + "%",
+            "Retry Info", JOptionPane.INFORMATION_MESSAGE));
     }
 
     @Override
@@ -23,7 +62,9 @@ public class GraphPanel extends JPanel {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Krok 1: Znajdź zakres koordynatów logicznych (min/max row i col)
+        g2d.translate(offsetX, offsetY);
+        g2d.scale(scale, scale);
+
         int minRow = Integer.MAX_VALUE, maxRow = Integer.MIN_VALUE;
         int minCol = Integer.MAX_VALUE, maxCol = Integer.MIN_VALUE;
         for (Vertex v : graph.getVertices()) {
@@ -33,30 +74,24 @@ public class GraphPanel extends JPanel {
             if (v.x > maxCol) maxCol = v.x;
         }
 
-        // Krok 2: Oblicz współczynniki skalowania, aby dopasować graf do panelu
         int availableWidth = getWidth() - 2 * PADDING;
         int availableHeight = getHeight() - 2 * PADDING;
         double hScale = (maxCol - minCol == 0) ? 1 : (double) availableWidth / (maxCol - minCol);
         double vScale = (maxRow - minRow == 0) ? 1 : (double) availableHeight / (maxRow - minRow);
+        double baseScale = Math.min(hScale, vScale);
 
-        // Użyj mniejszego ze współczynników, aby zachować proporcje
-        double scale = Math.min(hScale, vScale);
-
-        // Krok 3: Stwórz mapę pozycji na ekranie dla każdego wierzchołka
         Map<Integer, Point> positions = new HashMap<>();
         for (Vertex v : graph.getVertices()) {
-            int screenX = PADDING + (int) ((v.x - minCol) * scale);
-            int screenY = PADDING + (int) ((v.y - minRow) * scale);
+            int screenX = PADDING + (int) ((v.x - minCol) * baseScale);
+            int screenY = PADDING + (int) ((v.y - minRow) * baseScale);
             positions.put(v.id, new Point(screenX, screenY));
         }
 
-        // Krok 4: Narysuj krawędzie
         g2d.setColor(Color.LIGHT_GRAY);
         g2d.setStroke(new BasicStroke(1.5f));
         for (Vertex v : graph.getVertices()) {
             Point p1 = positions.get(v.id);
             for (Vertex u : v.getNeighbours()) {
-                // Rysuj krawędź tylko raz (np. gdy id v < id u), aby uniknąć podwójnego rysowania
                 if (v.id < u.id) {
                     Point p2 = positions.get(u.id);
                     g2d.drawLine(p1.x, p1.y, p2.x, p2.y);
@@ -64,7 +99,6 @@ public class GraphPanel extends JPanel {
             }
         }
 
-        // Krok 5: Narysuj wierzchołki
         for (Vertex v : graph.getVertices()) {
             Point p = positions.get(v.id);
             int x = p.x - NODE_SIZE / 2;
@@ -78,7 +112,7 @@ public class GraphPanel extends JPanel {
     }
 
     private Color getColorForPartition(int id) {
-        if (id < 0) return Color.GRAY; // Kolor dla nieprzypisanych wierzchołków
+        if (id < 0) return Color.GRAY; // Color for unbound vertices
         Color[] colors = {
                 new Color(31, 119, 180), new Color(255, 127, 14), new Color(44, 160, 44),
                 new Color(214, 39, 40), new Color(148, 103, 189), new Color(140, 86, 75),
