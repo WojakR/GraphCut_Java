@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 public class GraphPanel extends JPanel {
     private Graph graph;
     private final int PADDING = 40; // Margin in pixels from panel edge
-    private final int NODE_SIZE = 10; // Vertice's diameter
+    private final int NODE_BASE_SIZE = 5; // Vertice's diameter
 
     private double scale = 1.0;
     private double offsetX = 0;
@@ -101,13 +101,14 @@ public class GraphPanel extends JPanel {
 
         for (Vertex v : graph.getVertices()) {
             Point p = positions.get(v.id);
-            int x = p.x - NODE_SIZE / 2;
-            int y = p.y - NODE_SIZE / 2;
+            int r = (int) Math.max(2, NODE_BASE_SIZE / scale); // Scaled radius
+            int x = p.x - r;
+            int y = p.y - r;
 
             g2d.setColor(getColorForPartition(v.getPartitionID()));
-            g2d.fillOval(x, y, NODE_SIZE, NODE_SIZE);
+            g2d.fillOval(x, y, r * 2, r * 2);
             g2d.setColor(Color.BLACK);
-            g2d.drawOval(x, y, NODE_SIZE, NODE_SIZE);
+            g2d.drawOval(x, y, r * 2, r * 2);
         }
     }
 

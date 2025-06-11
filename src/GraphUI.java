@@ -83,27 +83,28 @@ public class GraphUI extends JFrame {
                              .mapToInt(Vertex::getPartitionID)
                              .max().orElse(0);
 
-        Integer[] groupOptions = new Integer[maxGroup + 1];
-        for (int i = 0; i <= maxGroup; i++) groupOptions[i] = i;
+        JCheckBox saveAllBox = new JCheckBox("Save all groups");
+        JComboBox<Integer> groupSelector = new JComboBox<>();
+        for (int i = 0; i <= maxGroup; i++) groupSelector.addItem(i);
 
-        Integer selectedGroup = (Integer) JOptionPane.showInputDialog(
-            this,
-            "Which group do you want to save ?",
-            "Choose Partition",
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            groupOptions, 
-            groupOptions[0]);
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.add(new JLabel("Select group to save:"));
+        panel.add(groupSelector);
+        panel.add(saveAllBox);
 
-        if (selectedGroup == null) return;
+        int choice = JOptionPane.showConfirmDialog(this, panel, "Choose Partition",
+            JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+        if (choice != JOptionPane.OK_OPTION) return;
+        boolean saveAll = saveAllBox.isSelected();
+        int selectedGroup = (Integer) groupSelector.getSelectedItem();
 
         JFileChooser fc = new JFileChooser();
-        fc.setDialogTitle("Choose location to save the graph");
-
+        fc.setDialogTitle("Choose base filename (.csrrg will be added)");
         int result = fc.showSaveDialog(this);
         if (result != JFileChooser.APPROVE_OPTION) return;
-        
-        String path = fc.getSelectedFile().getAbsolutePath();
+        String basePath = fc.getSelectedFile().getAbsolutePath();
 
         // Ask about binary/text mode
         Object[] options = {"Text", "Binary"};
@@ -117,19 +118,30 @@ public class GraphUI extends JFrame {
                 options[0]);
 
         if (mode == -1) return;
-
         boolean isBinary = (mode == 1);
-
-        // .csrrg extension
-        if (!path.endsWith(".csrrg")) path += ".csrrg";
 
         int[] assignment = new int[graph.numVertices()];
         for (int i = 0; i < assignment.length; i++) {
             assignment[i] = graph.getVertex(i).getPartitionID();
         }
-                
-        TempGraphIO.savePartition(graph, assignment, selectedGroup, path, isBinary);
-        JOptionPane.showMessageDialog(this, "Group " + selectedGroup + " saved to:\n" + path);
+
+        try {
+            if (saveAll) {
+                for (int i = 0; i <= maxGroup; i++) {
+                    String path = basePath + "_group_" + i + ".csrrg";
+                    TempGraphIO.savePartition(graph, assignment, i, path, isBinary);
+                }
+                JOptionPane.showMessageDialog(this, "All groups saved successfully.");
+            } else {
+                String path = basePath;
+                if (!path.endsWith(".csrrg")) path += ".csrrg";
+                TempGraphIO.savePartition(graph, assignment, selectedGroup, path, isBinary);
+                JOptionPane.showMessageDialog(this, "Group " + selectedGroup + " saved to:\n" + path);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error saving: " + ex.getMessage());
+        }
     }
 
     private void runPartitioning() {
