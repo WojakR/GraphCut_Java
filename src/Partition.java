@@ -7,7 +7,7 @@ public class Partition {
 
         while (attempts < 8) {
             Dijkstra.partition(g, assignment, parts);
-            KernighanLin.refine(g, assignment, parts);
+            KernighanLin.refine(g, assignment, parts, 5);
             if (Utils.checkBalance(g, assignment, parts, currentMargin)) {
                 for (int i = 0; i < g.numVertices(); i++) {
                     g.vertexData[i].groupId = assignment[i];

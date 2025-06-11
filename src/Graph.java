@@ -74,4 +74,18 @@ public class Graph {
             vertexData[i].groupId = -1; // or 0
         }
     }
+
+    public void removeCutEdges(int[] assignment) {
+        for (Vertex v : vertexData) {
+            Iterator<Vertex> it = v.neighbors.iterator();
+            while (it.hasNext()) {
+                Vertex neighbor = it.next();
+                if (assignment[v.id] != assignment[neighbor.id]) {
+                    it.remove();
+                    neighbor.neighbors.remove(v);
+                }
+            }
+        }
+    }
+    
 }

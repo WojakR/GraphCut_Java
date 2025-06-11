@@ -162,6 +162,7 @@ public class GraphUI extends JFrame {
                     JOptionPane.INFORMATION_MESSAGE);
             }
 
+            graph.removeCutEdges(assignment);
             graphPanel.setGraph(graph);
             graphPanel.repaint();
 

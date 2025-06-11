@@ -10,30 +10,22 @@ public class Dijkstra {
         int[][] dists = new int[parts][];
         for (int i = 0; i < parts; i++) dists[i] = shortestPaths(g, seeds[i]);
 
-        int[] counts = new int[parts];
-        int maxPerPart = (int)Math.ceil(n / (double)parts);
+        int[] partSizes = new int[parts];
+        int maxSize = (int)Math.ceil((double) n / parts);
 
         for (int v = 0; v < n; v++) {
             int best = -1;
             int minDist = Integer.MAX_VALUE;
             for (int i = 0; i < parts; i++) {
-                if (counts[i] < maxPerPart && dists[i][v] < minDist) {
+                if (partSizes[i] < maxSize && dists[i][v] < minDist) {
                     minDist = dists[i][v];
                     best = i;
                 }
             }
             
-            if (best == -1) {
-                for (int i = 0; i < parts; i++) {
-                    if (counts[i] < n) {
-                        best = i;
-                        break;
-                    }
-                }
-            }
-
+            if (best == -1) best = 0;
             assignment[v] = best;
-            counts[best]++;
+            partSizes[best]++;
         }
     }
 

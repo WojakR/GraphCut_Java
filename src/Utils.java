@@ -17,11 +17,6 @@ public class Utils {
         }
     }
 
-    public static void printHelp() {
-        System.out.println("Uzycie: java Main <liczba_czesci> <margines_%> --input <plik.csrrg> [opcje]");
-        System.out.println("--output <nazwa>   --binary   --verbose   --graph <nr>   --help");
-    }
-
     public static int[] createAssignmentArray(int n) {
         int[] arr = new int[n];
         Arrays.fill(arr, -1);
