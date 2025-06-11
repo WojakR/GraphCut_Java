@@ -1,9 +1,7 @@
-// Plik: GraphUI.java (KOMPLETNY I POPRAWIONY)
 
 import javax.swing.*;
 import java.awt.BorderLayout;
-import java.util.Arrays; // Potrzebne do Arrays.fill
-import java.util.Random; // Potrzebne do runPartitioning
+import java.util.Arrays;
 
 public class GraphUI extends JFrame {
     private Graph graph;
@@ -16,7 +14,6 @@ public class GraphUI extends JFrame {
         setSize(800, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        // Menu (bez zmian)
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
         JMenuItem loadTxt = new JMenuItem("Load from text");
@@ -28,7 +25,6 @@ public class GraphUI extends JFrame {
         menuBar.add(fileMenu);
         setJMenuBar(menuBar);
 
-        // Panel grafu (bez zmian)
         graphPanel = new GraphPanel();
         add(graphPanel, BorderLayout.CENTER);
 
@@ -44,7 +40,6 @@ public class GraphUI extends JFrame {
         controlPanel.add(partitionBtn);
         add(controlPanel, BorderLayout.SOUTH);
 
-        // Obsługa zdarzeń (bez zmian)
         loadTxt.addActionListener(e -> loadGraphFromTxt());
         loadBin.addActionListener(e -> loadGraphFromBin());
         save.addActionListener(e -> saveGraph());
@@ -70,7 +65,6 @@ public class GraphUI extends JFrame {
         JFileChooser fc = new JFileChooser();
         if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             try {
-                // Dla plików binarnych często nie ma wielu grafów, więc index 1 może być właściwy, ale zależy to od pliku.
                 graph = TempGraphIO.loadGraph(fc.getSelectedFile().getAbsolutePath(), 1);
                 graphPanel.setGraph(graph);
                 repaint();
@@ -80,7 +74,6 @@ public class GraphUI extends JFrame {
         }
     }
 
-    // --- POPRAWIONA METODA ZAPISU ---
     private void saveGraph() {
         if (graph == null) {
             JOptionPane.showMessageDialog(this, "No graph loaded to save.", "Info", JOptionPane.INFORMATION_MESSAGE);
@@ -91,14 +84,11 @@ public class GraphUI extends JFrame {
         if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             try {
                 String filePath = fc.getSelectedFile().getAbsolutePath();
-                // Format zapisu (binarny/tekstowy) na podstawie rozszerzenia pliku
                 boolean isBinary = filePath.endsWith("bin");
 
-                // Stwórz tymczasową tablicę 'assignment', gdzie cały graf to jedna partycja (grupa 0)
                 int[] fullGraphAssignment = new int[graph.numVertices()];
                 Arrays.fill(fullGraphAssignment, 0);
 
-                // Wywołaj metodę zapisu partycji, aby zapisać cały graf jako jedną całość
                 TempGraphIO.savePartition(graph, fullGraphAssignment, 0, filePath, isBinary);
 
                 JOptionPane.showMessageDialog(this, "Graph saved successfully to " + filePath);
@@ -119,7 +109,6 @@ public class GraphUI extends JFrame {
             int margin = (int)(Double.parseDouble(marginField.getText()));
             int[] assignment = new int[graph.numVertices()];
 
-            // UWAGA: Używamy logiki z Partition.java, aby podział był spójny z aplikacją konsolową
             Partition.cutGraph(graph, k, margin, assignment);
 
             graph.setPartitions(assignment);
@@ -130,8 +119,6 @@ public class GraphUI extends JFrame {
         }
     }
 
-    // Usunięto metody assignRandomCoordinates() i isTooClose(), ponieważ powodowały problemy.
-    // Logika pozycjonowania jest teraz w GraphPanel.
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(GraphUI::new);

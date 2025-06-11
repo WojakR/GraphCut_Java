@@ -1,4 +1,3 @@
-// Plik: TempGraphIO.java
 
 import java.io.*;
 import java.util.*;
@@ -95,10 +94,8 @@ public class TempGraphIO {
     }
 
     public static void savePartition(Graph originalGraph, int[] assignment, int targetGroup, String filename, boolean binaryFormat) {
-        // Krok 1: Utwórz poprawny, zapisywalny podgraf na podstawie oryginalnego grafu
         Graph subgraph = createSaveableSubgraph(originalGraph, assignment, targetGroup);
 
-        // Krok 2: Zapisz utworzony podgraf, jeśli nie jest pusty
         if (subgraph == null || subgraph.numVertices() <= 0) {
             System.out.println("Info: Skipping save for empty partition " + targetGroup);
             return;
@@ -251,7 +248,7 @@ public class TempGraphIO {
 
             if (!neighborsToProcess.isEmpty()) {
                 groupedNodeIndices.add(mainId);
-                Collections.sort(neighborsToProcess); // Dla spójności wyników
+                Collections.sort(neighborsToProcess);
                 groupedNodeIndices.addAll(neighborsToProcess);
                 groupPointers.add(groupedNodeIndices.size());
             }
