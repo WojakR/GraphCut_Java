@@ -7,8 +7,8 @@ import java.util.function.Consumer;
 
 public class GraphPanel extends JPanel {
     private Graph graph;
-    private final int PADDING = 40; // Margin in pixels from panel edge
-    private final int NODE_BASE_SIZE = 5; // Vertice's diameter
+    private final int PADDING = 10; // Margin in pixels from panel edge
+    private final int NODE_BASE_SIZE = 4; // Vertice's diameter
 
     private double scale = 1.0;
     private double offsetX = 0;
@@ -87,8 +87,9 @@ public class GraphPanel extends JPanel {
             positions.put(v.id, new Point(screenX, screenY));
         }
 
+        float edgeStroke = (float) Math.max(0.5, 1.5 / scale); // Scaled edge stroke
         g2d.setColor(Color.LIGHT_GRAY);
-        g2d.setStroke(new BasicStroke(1.5f));
+        g2d.setStroke(new BasicStroke(edgeStroke));
         for (Vertex v : graph.getVertices()) {
             Point p1 = positions.get(v.id);
             for (Vertex u : v.getNeighbours()) {
@@ -107,6 +108,9 @@ public class GraphPanel extends JPanel {
 
             g2d.setColor(getColorForPartition(v.getPartitionID()));
             g2d.fillOval(x, y, r * 2, r * 2);
+
+            float strokeWidth = (float) Math.max(0.5, 1.5 / scale); // Scaled stroke
+            g2d.setStroke(new BasicStroke(strokeWidth));
             g2d.setColor(Color.BLACK);
             g2d.drawOval(x, y, r * 2, r * 2);
         }

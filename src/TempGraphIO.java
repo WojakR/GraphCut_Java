@@ -440,19 +440,18 @@ public class TempGraphIO {
         return numbers;
     }
 
+    // private static void readUntilSeparator(InputStream is) throws IOException {
+    //     byte[] buffer = new byte[8];
+    //     while (is.available() > 0) {
+    //         is.mark(8);
+    //         int bytesRead = is.read(buffer);
+    //         if (bytesRead == 8 && Arrays.equals(buffer, GRAFO_SIEKACZ_SEPARATOR)) {
+    //             // Znaleziono i użyto separator
+    //             return;
+    //         }
 
-    private static void readUntilSeparator(InputStream is) throws IOException {
-        byte[] buffer = new byte[8];
-        while (is.available() > 0) {
-            is.mark(8);
-            int bytesRead = is.read(buffer);
-            if (bytesRead == 8 && Arrays.equals(buffer, GRAFO_SIEKACZ_SEPARATOR)) {
-                // Znaleziono i użyto separator
-                return;
-            }
-
-            is.reset();
-            is.read();
-        }
-    }
+    //         is.reset();
+    //         is.read();
+    //     }
+    // }
 }
