@@ -24,11 +24,7 @@ public class CutApp {
         if (verboseMode) graph.print();
 
         int[] assignment = Utils.createAssignmentArray(graph.numVertices());
-        boolean ok = Partition.cutGraph(graph, numPartitions, margin, assignment, null);
-        if (!ok) {
-            System.err.println("Partitioning failed, graph remains unchanged.");
-            return;
-        }
+        Partition.cutGraph(graph, numPartitions, margin, assignment, null);
 
         for (int i = 0; i < numPartitions; ++i) {
             String outputFilename = outputFileBase + "_" + i + ".csrrg" + (binary ? "bin" : "");

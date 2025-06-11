@@ -1,6 +1,7 @@
 public class Main {
     public static void main(String[] args) {
-        CutApp app = new CutApp();
-        app.run(args);
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            new GraphUI().setVisible(true);
+        });
     }
 }

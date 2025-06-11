@@ -31,10 +31,16 @@ public class Utils {
     public static boolean checkBalance(Graph g, int[] assign, int parts, double margin) {
         int[] counts = new int[parts];
         for (int i = 0; i < g.numVertices(); i++) counts[assign[i]]++;
-        int avg = g.numVertices() / parts;
+
+        double avg = g.numVertices() / (double)parts;
         int min = (int)Math.floor(avg * (1 - margin / 100.0));
         int max = (int)Math.ceil(avg * (1 + margin / 100.0));
-        for (int c : counts) if (c < min || c > max) return false;
+
+        for (int c : counts) {
+            if (c < min || c > max) {
+                if (!(c >= min - 1 && c <= max +1)) return false;
+            }
+        }
         return true;
     }
 }

@@ -75,27 +75,61 @@ public class GraphUI extends JFrame {
 
     private void saveGraph() {
         if (graph == null) {
-            JOptionPane.showMessageDialog(this, "No graph loaded to save.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "No graph to save.");
             return;
         }
 
+        int maxGroup = Arrays.stream(graph.getVertices())
+                             .mapToInt(Vertex::getPartitionID)
+                             .max().orElse(0);
+
+        Integer[] groupOptions = new Integer[maxGroup + 1];
+        for (int i = 0; i <= maxGroup; i++) groupOptions[i] = i;
+
+        Integer selectedGroup = (Integer) JOptionPane.showInputDialog(
+            this,
+            "Which group do you want to save ?",
+            "Choose Partition",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            groupOptions, 
+            groupOptions[0]);
+
+        if (selectedGroup == null) return;
+
         JFileChooser fc = new JFileChooser();
-        if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            try {
-                String filePath = fc.getSelectedFile().getAbsolutePath();
-                boolean isBinary = filePath.endsWith("bin");
+        fc.setDialogTitle("Choose location to save the graph");
 
-                int[] fullGraphAssignment = new int[graph.numVertices()];
-                Arrays.fill(fullGraphAssignment, 0);
+        int result = fc.showSaveDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) return;
+        
+        String path = fc.getSelectedFile().getAbsolutePath();
 
-                TempGraphIO.savePartition(graph, fullGraphAssignment, 0, filePath, isBinary);
+        // Ask about binary/text mode
+        Object[] options = {"Text", "Binary"};
+        int mode = JOptionPane.showOptionDialog(this,
+                "Choose output format:",
+                "Save Format",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
 
-                JOptionPane.showMessageDialog(this, "Graph saved successfully to " + filePath);
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "An error occured while saving the file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-                e.printStackTrace();
-            }
+        if (mode == -1) return;
+
+        boolean isBinary = (mode == 1);
+
+        // .csrrg extension
+        if (!path.endsWith(".csrrg")) path += ".csrrg";
+
+        int[] assignment = new int[graph.numVertices()];
+        for (int i = 0; i < assignment.length; i++) {
+            assignment[i] = graph.getVertex(i).getPartitionID();
         }
+                
+        TempGraphIO.savePartition(graph, assignment, selectedGroup, path, isBinary);
+        JOptionPane.showMessageDialog(this, "Group " + selectedGroup + " saved to:\n" + path);
     }
 
     private void runPartitioning() {
