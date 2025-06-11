@@ -4,6 +4,11 @@ import java.util.stream.Collectors;
 
 public class TempGraphIO {
 
+    private static final byte[] GRAFO_SIEKACZ_SEPARATOR = {
+            (byte) 0xBE, (byte) 0xBA, (byte) 0xFE, (byte) 0xCA,
+            (byte) 0xEF, (byte) 0xBE, (byte) 0xAD, (byte) 0xDE
+    };
+
     public static Graph loadGraph(String filename, int graphIndex) throws IOException {
         if (graphIndex <= 0) {
             System.err.println("Error: Target graph index must be a positive integer");
@@ -312,6 +317,142 @@ public class TempGraphIO {
             int delta = currentValue - prevValue;
             dos.writeShort((short) delta);
             prevValue = currentValue;
+        }
+    }
+
+    public static Graph loadGrafoSiekaczBinary(String filename, int graphIndex) {
+        if (graphIndex <= 0) {
+            System.err.println("Error: Target graph index must be a positive integer");
+            return null;
+        }
+
+        try (InputStream is = new BufferedInputStream(new FileInputStream(filename))) {
+
+            List<Integer> line1Data = readVByteSection(is);
+            if (line1Data.isEmpty()) throw new IOException("Failed to read Line 1 (maxDim).");
+            int maxDim = line1Data.get(0);
+
+            List<Integer> colIndicesList = readVByteSection(is);
+            int[] colIndices = colIndicesList.stream().mapToInt(i -> i).toArray();
+            int numVert = colIndices.length;
+            if (numVert == 0) throw new IOException("No nodes found in binary graph file.");
+
+            List<Integer> rowPointersList = readVByteSection(is);
+            int[] rowPointers = rowPointersList.stream().mapToInt(i -> i).toArray();
+            if (rowPointers.length == 0 || rowPointers[0] != 0 || rowPointers[rowPointers.length - 1] != numVert) {
+                throw new IOException("Invalid rowPointers data in binary Line 3.");
+            }
+
+            List<Integer> edgeListIndicesList = readVByteSection(is);
+            int[] edgeListIndices = edgeListIndicesList.stream().mapToInt(i -> i).toArray();
+            for (int idx : edgeListIndices) {
+                if (idx < 0 || idx >= numVert) throw new IOException("Invalid vertex index in binary Line 4.");
+            }
+
+            int[] edgeGroupPointers = null;
+            int foundGraphIndex = 0;
+            while (is.available() > 0) {
+                foundGraphIndex++;
+                List<Integer> edgeGroupPointersList = readVByteSection(is);
+                if (foundGraphIndex == graphIndex) {
+                    edgeGroupPointers = edgeGroupPointersList.stream().mapToInt(i -> i).toArray();
+                    break;
+                }
+            }
+
+            if (edgeGroupPointers == null) {
+                throw new IOException("Graph index " + graphIndex + " not found in binary file.");
+            }
+
+            Graph graph = new Graph(numVert);
+            graph.maxDim = maxDim;
+
+            for (int r = 0; r < rowPointers.length - 1; r++) {
+                int rowStartIndex = rowPointers[r];
+                int rowEndIndex = rowPointers[r + 1];
+                for (int k = rowStartIndex; k < rowEndIndex; k++) {
+                    graph.vertexData[k].id = k;
+                    graph.vertexData[k].y = r;            // y to row
+                    graph.vertexData[k].x = colIndices[k]; // x to col
+                }
+            }
+
+            for (int i = 0; i < edgeGroupPointers.length; i++) {
+                int groupStartIndex = edgeGroupPointers[i];
+                int groupEndIndex = (i == edgeGroupPointers.length - 1) ? edgeListIndices.length : edgeGroupPointers[i + 1];
+                if (groupEndIndex - groupStartIndex < 2) continue;
+
+                int mainNode = edgeListIndices[groupStartIndex];
+                for (int k = groupStartIndex + 1; k < groupEndIndex; k++) {
+                    int restNode = edgeListIndices[k];
+                    if (mainNode != restNode) {
+                        graph.addEdge(mainNode, restNode);
+                        graph.addEdge(restNode, mainNode);
+                    }
+                }
+            }
+            return graph;
+
+        } catch (IOException e) {
+            System.err.println("Error loading Grafo-Siekacz binary file '" + filename + "': " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static long decodeVByte(InputStream is) throws IOException {
+        long value = 0;
+        int shift = 0;
+        while (true) {
+            int b = is.read();
+            if (b == -1) {
+                throw new EOFException("Unexpected end of stream while decoding vByte.");
+            }
+            // Dodaj 7 bitów danych do wyniku
+            value |= (long) (b & 0x7F) << shift;
+            shift += 7;
+            // Jeśli bit kontynuacji (MSB) jest 0, to koniec liczby
+            if ((b & 0x80) == 0) {
+                break;
+            }
+        }
+        return value;
+    }
+
+
+    private static List<Integer> readVByteSection(InputStream is) throws IOException {
+        List<Integer> numbers = new ArrayList<>();
+        byte[] buffer = new byte[8];
+
+        while (is.available() > 0) {
+            is.mark(8);
+            int bytesRead = is.read(buffer);
+
+            if (bytesRead == 8 && Arrays.equals(buffer, GRAFO_SIEKACZ_SEPARATOR)) {
+                // Znaleziono separator
+                break;
+            } else {
+                // To nie separator
+                is.reset();
+                numbers.add((int) decodeVByte(is));
+            }
+        }
+        return numbers;
+    }
+
+
+    private static void readUntilSeparator(InputStream is) throws IOException {
+        byte[] buffer = new byte[8];
+        while (is.available() > 0) {
+            is.mark(8);
+            int bytesRead = is.read(buffer);
+            if (bytesRead == 8 && Arrays.equals(buffer, GRAFO_SIEKACZ_SEPARATOR)) {
+                // Znaleziono i użyto separator
+                return;
+            }
+
+            is.reset();
+            is.read();
         }
     }
 }

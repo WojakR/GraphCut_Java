@@ -64,7 +64,7 @@ public class GraphUI extends JFrame {
         JFileChooser fc = new JFileChooser();
         if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             try {
-                graph = TempGraphIO.loadGraph(fc.getSelectedFile().getAbsolutePath(), 1);
+                graph = TempGraphIO.loadGrafoSiekaczBinary(fc.getSelectedFile().getAbsolutePath(), 1);
                 graphPanel.setGraph(graph);
                 repaint();
             } catch (Exception e) {
