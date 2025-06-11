@@ -2,6 +2,7 @@ import java.util.*;
 
 public class Graph {
     public Vertex[] vertexData;
+    public int maxDim;
 
     public Graph(int numVertices) {
         vertexData = new Vertex[numVertices];
@@ -58,6 +59,13 @@ public class Graph {
     public void setPartitions(int[] assignment) {
         for (int i = 0; i < vertexData.length; i++) {
             vertexData[i].setPartitionId(assignment[i]);
+        }
+    }
+
+    public void addEdge(int src, int dest) {
+        if (src < 0 || src >= numVertices() || dest < 0 || dest >= numVertices()) return;
+        if (!Arrays.stream(vertexData[src].neighbors.toArray()).anyMatch(v -> ((Vertex)v).id == dest)) {
+            vertexData[src].neighbors.add(vertexData[dest]);
         }
     }
 }

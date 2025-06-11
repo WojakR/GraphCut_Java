@@ -26,8 +26,8 @@ public class CutApp {
 
         for (int i = 0; i < numPartitions; ++i) {
             String outputFilename = outputFileBase + "_" + i + ".csrrg" + (binary ? "bin" : "");
-            Graph subgraph = graph.extractSubgraph(assignment, numPartitions, i);
-            TempGraphIO.saveGraph(subgraph, outputFilename, binary);
+            TempGraphIO.savePartition(graph, assignment, i, outputFilename, binary);
+
         }
 
         System.out.println("Finished successfully.");
