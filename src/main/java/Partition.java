@@ -1,3 +1,4 @@
+package main.java;
 import java.util.function.Consumer;
 
 public class Partition {

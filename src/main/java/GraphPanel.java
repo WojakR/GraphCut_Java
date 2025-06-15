@@ -1,3 +1,4 @@
+package main.java;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -87,7 +88,7 @@ public class GraphPanel extends JPanel {
             positions.put(v.id, new Point(screenX, screenY));
         }
 
-        float edgeStroke = (float) Math.max(0.5, 1.5 / scale); // Scaled edge stroke
+        float edgeStroke = (float) Math.max(0.2, 0.5 / scale); // Scaled edge stroke
         g2d.setColor(Color.LIGHT_GRAY);
         g2d.setStroke(new BasicStroke(edgeStroke));
         for (Vertex v : graph.getVertices()) {
