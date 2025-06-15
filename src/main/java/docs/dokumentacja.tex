@@ -1,0 +1,286 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[polish]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+
+\lstset{
+    language=C,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny,
+    frame=single,
+    captionpos=b
+}
+
+\title{Dokumentacja finalna programu Visualizer}
+\author{Wojciech Regulski, Kajetan Wójcik}
+\date{12.06.2025}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Cel projektu}
+Program \texttt{Visualizer} ma na celu rozwiązanie problemu \texttt{Sparsest Cut}. Polega on na podziale grafu na określoną liczbę części, zapewniając równomierność liczby wierzchołków oraz minimalizację liczby przeciętych krawędzi. Parametry określane są z interfejsu programu.
+
+\section{Instrukcja obsługi programu}
+\begin{itemize}
+  \item \texttt{Number of divisions} --- pozwala wybrać, liczbę części, na które graf zostanie podzielony,
+  \item \texttt{Margin} --- określa margines błędu podczas podziału grafu, jeżeli nie jest on spełniony, program próbuje zwiększyć margines błędu informując o tym użytkownika,
+  \item \texttt{File > Load from...} --- wczytuje wybrany przez użytkownika graf w formie tekstowej lub binarnej,
+  \item \texttt{File > Save graph} --- zapisuje wybraną część grafu (lub wszystkie po wybraniu opcji \texttt{Save all}, w formie tekstowej lub binarnej, do wybranej przez użytkownika lokalizacji,
+  \item \texttt{Divide} --- główna funkcja programu, dzieli graf zgodnie z podanymi wcześniej parametrami,
+  \item \texttt{Zoom} --- przy użyciu scrolla można dowolnie przybliżać oraz oddalać graf,
+  \item \texttt{Move} --- po przytrzymaniu lewego przycisku myszy, ruszając myszką można przesuwać widok grafu.
+\end{itemize}
+
+\section{Użyte technologie}
+Projekt został zrealizowany w języku Java z użyciem biblioteki Swing do tworzenia interfejsu graficznego. Algorytmy partycjonowania grafu zostały zaimplementowane od podstaw, a dane wejściowe i wyjściowe zapisano w specjalnym formacie \texttt{.csrrg} (tekstowym i binarnym).
+
+\section{Struktury danych}
+W implementacji programu Visualizer w języku Java wykorzystano zestaw klas reprezentujących strukturę grafu oraz interfejs graficzny aplikacji. Klasy te umożliwiają modelowanie wierzchołków, relacji między nimi, a także wyświetlanie grafu i interakcję użytkownika.
+
+\subsection*{Vertex}
+Reprezentuje pojedynczy wierzchołek grafu.
+\begin{itemize}
+  \item \texttt{int id} --- identyfikator wierzchołka.
+  \item \texttt{List<Vertex> neighbors} --- lista sąsiadujących wierzchołków.
+  \item \texttt{int groupId} --- identyfikator partycji, do której należy dany wierzchołek.
+  \item \texttt{int x, y} --- współrzędne wierzchołka w przestrzeni 2D (używane do wizualizacji).
+\end{itemize}
+Każdy wierzchołek tworzony jest z przypisanym \texttt{id}, a jego sąsiedzi mogą być dynamicznie dodawani do listy.
+
+\subsection*{Graph}
+Reprezentuje całą strukturę grafu.
+\begin{itemize}
+  \item \texttt{Vertex[] vertexData} --- tablica wszystkich wierzchołków w grafie.
+  \item \texttt{int maxDim} --- maksymalny wymiar grafu wykorzystywany do skalowania w widoku.
+\end{itemize}
+Konstruktor klasy \texttt{Graph} tworzy tablicę \texttt{Vertex} o zadanym rozmiarze i inicjalizuje każdy wierzchołek z odpowiednim identyfikatorem.
+
+\subsection*{GraphPanel}
+Komponent odpowiedzialny za wizualizację grafu.
+\begin{itemize}
+  \item Dziedziczy po \texttt{JPanel} i nadpisuje metodę \texttt{paintComponent(Graphics g)} w celu rysowania wierzchołków oraz ich połączeń.
+  \item Obsługuje:
+    \begin{itemize}
+        \item \textbf{Powiększanie i pomniejszanie} grafu za pomocą scrolla myszy.
+        \item \textbf{Przesuwanie widoku} poprzez przeciąganie myszą.
+    \end{itemize}
+   \item Zawiera pola:
+    \begin{itemize}
+        \item \texttt{Graph graf} --- graf do narysowania.
+        \item \texttt{double scale}, \texttt{offsetX}, \texttt{offsetY} --- parametry przeskalowania i przesunięcia widoku.
+        \item \texttt{int lastDragX, lastDragY} - współrzędne do śledzenia przeciągania.
+    \end{itemize}
+\end{itemize}
+\texttt{GraphPanel} umożliwia płynne i dynamiczne przeglądanie dużych struktur grafowych przez użytkownika.
+
+\subsection*{GraphUI}
+Główne okno aplikacji zbudowane na bazie \texttt{JFrame}.
+\begin{itemize}
+  \item Udostępnia graficzny interfejs użytkownika (GUI), umożliwiający:
+    \begin{itemize}
+        \item Wczytanie grafu z pliku tekstowego lub binarnego,
+        \item Zapis grafu do pliku,
+        \item Uruchomienie partycjonowania,
+        \item Ustawienie liczby partycji i marginesu procentowego.
+    \end{itemize}
+   \item Kluczowe komponenty:
+    \begin{itemize}
+        \item \texttt{GraphPanel graphPanel} --- panel do rysowania grafu,
+        \item \texttt{JTextField divisionsField}, texttt{marginField} --- pola wejściowe dla użytkownika,
+        \item Menu \texttt{File} z opcjami wczytywania/zapisu grafów,
+        \item Przycisk \texttt{Divide} do rozpoczęcia procesu partycjonowania.
+    \end{itemize}
+\end{itemize}
+\texttt{GraphUI} łączy logikę aplikacji z warstwą prezentacji, umożliwiając użytkownikowi prostą i intuicyjną obsługę programu.
+
+\section{Obsługa błędów}
+
+W implementacji programu Visualizer w języku Java zastosowano mechanizmy obsługi wyjątków, które umożliwiają bezpieczne reagowanie na błędy pojawiające się w czasie działania programu. \\
+\textbf{Główne założenia:}
+\begin{itemize}
+    \item Program nie powinien się zatrzymywać w przypadku błędu - zamiast tego powinien informować użytkownika o problemie w formie okienek dialogowych.
+    \item Wykryte błędy są przechwytywane i obsługiwane za pomocą bloków \texttt{try-catch}.
+\end{itemize}
+\textbf{Typowe przypadki obsługiwanych błędów:}
+\begin{itemize}
+    \item \textbf{Błędy podczas wczytywania pliku:}
+    \begin{lstlisting}
+    try {
+        graph = TempGraphIO.loadGraph(fc.getSelectedFile().getAbsolutePath(), 1);
+        graphPanel.setGraph(graph); // Przekazujemy graf do panelu
+        repaint(); // Odswiezamy widok
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "An error occured while loading text file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    \end{lstlisting}
+    \item \textbf{Błędy zapisu do pliku:}
+    \begin{lstlisting}
+    try {
+        if (saveAll) {
+            for (int i = 0; i <= maxGroup; i++) {
+                String path = basePath + "_group_" + i + ".csrrg";
+                TempGraphIO.savePartition(graph, assignment, i, path, isBinary);
+            }
+            JOptionPane.showMessageDialog(this, "All groups saved successfully.");
+        } else {
+            String path = basePath;
+            if (!path.endsWith(".csrrg")) path += ".csrrg";
+            TempGraphIO.savePartition(graph, assignment, selectedGroup, path, isBinary);
+            JOptionPane.showMessageDialog(this, "Group " + selectedGroup + " saved to:\n" + path);
+        }
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Error saving: " + ex.getMessage());
+    }
+    \end{lstlisting}
+\end{itemize}
+\textbf{Zastosowane klasy wyjątków:}
+\begin{itemize}
+    \item \texttt{IOException} - odczyt/zapis pliku,
+    \item \texttt{NumberFormatException} - błędne dane wprowadzone przez użytkownika,
+    \item Inne specyficzne wyjątki mogą być przechwytywane w zależności od potrzeb (np. \texttt{EOFException} lub \texttt{RuntimeException} wywołane w naszym kodzie w sytuacjach awaryjnych).
+\end{itemize}
+
+\section{Algorytm partycjonowania grafu}
+W celu uzyskania spójnych i zrównoważonych podziałów grafu w programie Visualizer zastosowano dwa podejścia algorytmiczne: zmodyfikowany algorytm Dijkstry oraz klasyczny algorytm Kernighana-Lina. Każdy z nich odpowiada za inny etap procesu podziału - inicjalizację i optymalizację.
+
+\subsection{Zmodyfikowany algorytm Dijkstry - inicjalne przypisanie grup}
+Moduł ten odpowiada za utworzenie bazowego podziału grafu na podstawie odległości wierzchołków od tzw. "nasion" (punktów startowych). Stanowi pierwszy krok w procesie partycjonowania. \\
+Funkcje pełnione przez algorytm:
+\begin{itemize}
+  \item Oblicza najkrótsze ścieżki z wybranego wierzchołka do wszystkich pozostałych w grafie, wykorzystując klasyczny algorytm Dijkstry.
+  \item Przeszukuje graf w celu znalezienia pary wierzchołków o największej wzajemnej odległości. Para ta stanowi dobre punkty startowe (tzw. nasienne) do dalszego podziału.
+  \item Przypisuje każdy wierzchołek do jednej z dwóch grup w zależności od tego, który z punktów startowych znajduje się bliżej. Dzięki temu graf zostaje podzielony na dwie logiczne części.
+  \item Przymuje liczbę grup i przypisuje wierzchołki na podstawie ich odległości do wybranych nasion, zapewniając wstępnie logiczny i przestrzenny podział.
+\end{itemize}
+
+\subsection{Algorytm Kernighana-Lina - optymalizacja podziału}
+Drugi etap procesu partycjonowania opiera się na algorytmie Kernighana-Lina, który iteracyjnie poprawia jakość podziału poprzez minimalizację liczby przeciętych krawędzi pomiędzy grupami. \\
+Funkcja pełniona przez algorytm:
+\begin{itemize}
+  \item Wykonuje iteracyjną optymalizację przypisań, poszukując par wierzchołków, których zamiana pomiędzy grupami prowadzi do zmniejszenia liczby przecięć. Proces ten powtarzany jest tak długo, jak długo przynosi poprawę jakości cięcia.
+\end{itemize}
+
+\subsection{Podsumowanie}
+Zastosowane podejście hybrydowe - wykorzystanie heurystycznej inicjalizacji przez Dijkstrę oraz optymalizacji lokalnej przez Kernighana-Lina - pozwala na uzyskanie partycji grafu, które są zarówno spójnie topologicznie, jak i optymalnie rozdzielone względem liczby przecięć. Taka konstrukcja algorytmiczna łączy szybkość działania z wysoką jakością wyniku końcowego.
+
+\section{Formaty plików wejściowych i wyjściowych}
+Program przyjmuje plik o rozszerzeniu \texttt{csrrg}, który jest typem tekstowym lub plik typu \texttt{bin}, który został wygenerowany przez program Visualizer.
+\subsection*{Tekstowy}
+Plik tekstowy \texttt{csrrg} służy do przechowywania danych opisujących strukturę grafu i składa się z następujących sekcji zapisywanych kolejno w liniach:
+\begin{enumerate}
+    \item \textbf{Linia 1:} Zawiera wartość określającą maksymalną liczbę węzłów, które mogą wystąpić w jednym wierszu.
+    \item \textbf{Linia 2:} Przechowuje indeksy wszystkich węzłów, podzielonych na wiersze, według ustalonego porządku.
+    \item \textbf{Linia 3:} Zawiera wskaźniki do pierwszych indeksów każdego wiersza znajdującego się w drugiej linii, umożliwiając łatwe odczytanie podziału na wiersze.
+    \item \textbf{Linia 4:} Opisuje grupy węzłów połączonych krawędziami, tworząc spójne fragmenty grafu.
+    \item \textbf{Linia 5 i kolejne:} Zawierają wskaźniki do pierwszych węzłów w każdej z grup opisanych w linii 4. Ta część pliku może występować wielokrotnie, co wskazuje, że dany plik zawiera więcej niż jeden graf.
+\end{enumerate}
+Wynikiem działania programu jest plik zapisany w tym formacie. W zależności od wyboru użytkownika plik może być zapisany też binarnie.
+
+\subsection*{Przykład}
+\begin{lstlisting}
+4
+0;2;0;2
+0;1;2;3;4
+0;1;2;3;1;2
+0;4
+\end{lstlisting}
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.25\linewidth]{obraz.png}
+    \caption{Wizualizacja grafu dla przykładu}
+    \label{fig:enter-label}
+\end{figure}
+
+\subsection*{Format binarny wejściowy}
+
+Dla zwiększenia wydajności i zmniejszenia rozmiaru pliku zastosowano binarną wersję formatu \texttt{csrrg}, zachowującą tę samą strukturę logiczną. Dane zapisywane są jako surowe bajty.
+
+Na początku pliku umieszczana jest liczba wierzchołków, zakodowana w formacie \textbf{vByte}. Następnie zapisywane są posortowane listy sąsiedztwa – po jednej dla każdego wierzchołka. W każdej liście pierwszy sąsiad zapisywany jest w całości, a kolejne jako różnice względem poprzedniego (kodowanie delt). Wszystkie liczby kodowane są przy użyciu \textbf{vByte}.
+
+Dla ułatwienia parsowania, bloki danych oddzielane są 8-bajtowym separatorem \\ 
+\texttt{0xDEADBEEFCAFEBABE} (w zapisie \textit{little-endian}: \texttt{BE BA FE CA EF BE AD DE}).
+
+\subsubsection*{Kodowanie vByte}
+
+vByte dzieli liczbę na 7-bitowe fragmenty zapisane w bajtach. MSB (najstarszy bit) każdego bajtu to flaga:
+\begin{itemize}
+\item \textbf{1} – oznacza, że liczba jest kontynuowana w kolejnym bajcie,
+\item \textbf{0} – to ostatni bajt danej liczby.
+\end{itemize}
+
+Fragmenty zapisywane są od najmłodszego (little-endian). Przykład: liczba \texttt{300} to \texttt{0xAC 0x02}, co odpowiada (0x02<<7)+0x2C=300(0x02<<7)+0x2C=300.
+
+\subsection*{Format binarny wyjściowy}
+Istnieje możliwość zapisu danych w formie binarnej. Format binarny zachowuje strukturę logiczną formatu \texttt{csrrg}, jednak dane są skompresowane w celu zmniejszenia potrzebnego miejsca do zapisu.
+
+Skompresowany plik zapisuje liczby w formacie 16-bitowym Little Endian . Oznacza to, że każda liczba zajmuje dokładnie 16 bitów, a kolejne wartości występują bezpośrednio po sobie.
+
+Liczby są zapisane używając kodowania delt, pierwsza liczba linii jest zapisana normalnie natomiast każda kolejna jest różnicą względem poprzedniej.
+
+Aby odróżnić linie od siebie wykorzystujemy prefiks długości linii, który pojawia się na początku pliku i każdej kolejnej linii, informuje ile wartości 16-bitowych występuje w danej linii pliku.
+
+
+\section{Struktura katalogów}
+Projekt Visualizer został zorganizowany zgodnie z typową strukturą projektu języka Java, jednak bez podziału na podkatalogi pakietowe. Wszystkie pliki źródłowe Java zostały umieszczone bezpośrednio w katalogu \texttt{src/main/java/}. Pozwala to na szybką kompilację i dostęp do wszystkich klas w jednym miejscu, co bywa wygodne w prostych projektach. \\
+Struktura katalogów wygląda następująco:
+\begin{lstlisting}
+GraphCut_Java/
+    src/
+        main/
+            java/
+                Dijkstra.java
+                Graph.java
+                GraphPanel.java
+                GraphUI.java
+                KernighanLin.java
+                Main.java
+                Partition.java
+                TempGraphIO.java
+                Utils.java
+                Vertex.java
+    data/
+        testGraph.csrrg
+        testGraphBinary.csrrg
+    docs/
+        dokumentacja.pdf
+        dokumentacja.tex
+\end{lstlisting}
+\textbf{Opis katalogów:}
+\begin{itemize}
+    \item \texttt{src/main/java/} \\
+    Zawiera wszystkie klasy źródłowe programu, w tym:
+    \begin{itemize}
+        \item logikę grafową (\texttt{Graph}, \texttt{Vertex}),
+        \item komponenty GUI (\texttt{GraphUI}, \texttt{GraphPanel}),
+        \item algorytmy (\texttt{Dijkstra}, \texttt{KernighanLin}),
+        \item moduł odpowiedzialny za obsługę plików (\texttt{TempGraphIO}),
+        \item funckje pomocnicze (\texttt{Partition}, \texttt{Utils}),
+        \item główną klasę startową (\texttt{Main}).
+    \end{itemize}
+    \item \texttt{data/} \\
+    Przykładowe pliki wejściowe w formacie \texttt{.csrrg} (tekstowym i binarnym).
+    \item \texttt{docs/} \\
+    Dokumentacja programu w formacie LaTeX i PDF.
+\end{itemize}
+\textbf{Uwagi:}
+\begin{itemize}
+    \item Przy braku podziału na pakiety wszystkie klasy należą do domyślnego pakietu. Jest to dopuszczalne w małych projektach, jednak przy większej rozbudowie zaleca się wprowadzenie pakietów logicznych np. (\texttt{graph}, \texttt{ui}, \texttt{algorithm}).
+    \item W przypadku wprowadzenia testów jednostkowych zalecane jest utworzenie katalogu \texttt{src/test/java/}.
+\end{itemize}
+\section{Podsumowanie}
+Projekt \texttt{Visualizer} spełnia zakładane cele poprzez połączenie funkcjonalnego interfejsu graficznego z zaawansowanym mechanizmem przetwarzania i partycjonowania grafów. Dzięki zastosowaniu dwóch uzupełniających się algorytmów, użytkownik otrzymuje rozwiązanie dokładne, szybkie i czytelne wizualnie. Struktura projektu oraz jakość implementacji umożliwia jego dalszy rozwój, np. przez dodanie innych heurystyk lub integrację z zewnętrznymi źródłami danych.
+\end{document}
